@@ -1,6 +1,6 @@
 
 -------------------------------------------------
-/*----------- Создание таблицы для задания (раскоментить) ----*/
+/*----------- РЎРѕР·РґР°РЅРёРµ РІСЂРµРјРµРЅРЅРѕР№ С‚Р°Р±Р»РёС†С‹ ----*/
 -------------------------------------------------
 
 --CREATE TABLE dbo.testtable (Object char(1), Subject char(1), Amount int)
@@ -21,12 +21,12 @@
 
 
 -------------------------------------------------
-/*-- Результат, если использовать функцию PIVOT*/
+/*-- Р РµР·СѓР»СЊС‚Р°С‚, РµСЃР»Рё РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ С„СѓРЅРєС†РёСЋ PIVOT*/
 -------------------------------------------------
 
 SELECT 
 	*
-FROM  
+FROM
 (
   SELECT Object, Subject, Amount
   FROM dbo.testtable
@@ -39,22 +39,22 @@ PIVOT
 
 
 -------------------------------------------------------
-/*-- Результат, если использовать dynamic sql*/
+/*-- Р РµР·СѓР»СЊС‚Р°С‚, РµСЃР»Рё РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ dynamic sql*/
 -------------------------------------------------------
 
 IF OBJECT_ID('tempdb..#prepTable') IS NOT NULL DROP TABLE #prepTable;
 
 CREATE TABLE #prepTable (Obj char(1));
 
-DECLARE @i int = 1; -- счетчик
-DECLARE @col char(1); -- столбец
-DECLARE @row char(1); -- строка
-DECLARE @query nvarchar(max); -- будущий запрос
+DECLARE @i int = 1; -- СЃС‡РµС‚С‡РёРє
+DECLARE @col char(1); -- СЃС‚РѕР»Р±РµС†
+DECLARE @row char(1); -- СЃС‚СЂРѕРєР°
+DECLARE @query nvarchar(max); -- Р±СѓРґСѓС‰РёР№ Р·Р°РїСЂРѕСЃ
 
--- перебор будущих "столбцов", по столбцу Subject
+-- РїРµСЂРµР±РѕСЂ Р±СѓРґСѓС‰РёС… "СЃС‚РѕР»Р±С†РѕРІ", РїРѕ СЃС‚РѕР»Р±С†Сѓ Subject
 WHILE @i <= (SELECT COUNT(DISTINCT Subject) FROM dbo.testtable)
 BEGIN
-	-- присваивание переменной очередного столбца
+	-- РїСЂРёСЃРІР°РёРІР°РЅРёРµ РїРµСЂРµРјРµРЅРЅРѕР№ РѕС‡РµСЂРµРґРЅРѕРіРѕ СЃС‚РѕР»Р±С†Р°
 	SET @col = (
 		SELECT Subject FROM (
 			SELECT ROW_NUMBER() OVER (ORDER BY Subject) AS RowNumber, Subject FROM (
@@ -63,23 +63,23 @@ BEGIN
 		) AS countRowSubj WHERE RowNumber = @i
 	);
 
-	-- добавление столбца
+	-- РґРѕР±Р°РІР»РµРЅРёРµ СЃС‚РѕР»Р±С†Р°
 	SET @query = 'ALTER TABLE #prepTable ADD ' + @col + ' int'
 
 	EXEC sp_executesql @query
-	-- инкремент счетчика
+	-- РёРЅРєСЂРµРјРµРЅС‚
 	SET @i += 1;
 END
 
--- вставка строк из существующей таблицы
+-- РІСЃС‚Р°РІРєР° СЃС‚СЂРѕРє РёР· СЃСѓС‰РµСЃС‚РІСѓСЋС‰РµР№ С‚Р°Р±Р»РёС†С‹
 INSERT INTO #prepTable (Obj) SELECT DISTINCT Object FROM dbo.testtable
 
--- сброс счетчика
+-- СЃР±СЂРѕСЃ СЃС‡РµС‚С‡РёРєР°
 SET @i = 1;
 
-DECLARE @valueSum int; -- значение суммы
+DECLARE @valueSum int; -- Р·РЅР°С‡РµРЅРёРµ СЃСѓРјРјС‹
 
--- цикл для вставки сумм как значений
+-- С†РёРєР» РґР»СЏ РІСЃС‚Р°РІРєРё СЃСѓРјРј РєР°Рє Р·РЅР°С‡РµРЅРёР№
 WHILE @i <= (SELECT COUNT(*) FROM (SELECT DISTINCT Object, Subject FROM dbo.testtable) AS countSumRows)
 BEGIN
 	SELECT @row = Object, @col = Subject, @valueSum = Amount FROM (
